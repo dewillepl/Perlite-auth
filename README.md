@@ -57,7 +57,13 @@ This fork adds simple authentication on top of Perlite and is intended for Docke
    docker build -t perlite-auth-app .
    ```
 
-3. Configure via `docker-compose.yml`:
+3. Create a folder for the vault
+   ```bash
+   mkdir perlite/Obsidian
+   ```
+   (If you use a different folder name than "Obsidian", you must update the `Image Mapping` block in the `perlite.conf` file  accordingly.)
+
+4. Configure via `docker-compose.yml`:
 
    ```yaml
    environment:
@@ -67,7 +73,7 @@ This fork adds simple authentication on top of Perlite and is intended for Docke
 
    For the rest of the configuration, please refer to the original [Docker Setup](https://github.com/secure-77/Perlite/wiki/02---Setup-Docker) documentation.
 
-4. Start the container:
+5. Start the container:
 
    ```bash
    docker compose up -d

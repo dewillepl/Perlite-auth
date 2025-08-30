@@ -1,7 +1,10 @@
-# Perlite
+# Perlite with Authorization
   
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/secure-77/perlite) ![GitHub](https://img.shields.io/github/license/secure-77/perlite) ![GitHub last commit](https://img.shields.io/github/last-commit/secure-77/Perlite)
 
+This fork adds simple authentication to Perlite, designed for Docker deployments only. It also fixes compatibility with PHP 8.2+ 
+
+---
 
 A web based markdown viewer optimized for [Obsidian](https://obsidian.md/) Notes
 
@@ -36,15 +39,39 @@ If you want to discuss Perlite you can join the [Perlite Discord Server](https:/
 - Obsidian tags, links, images and preview Support
 - Dark and Light Mode
 
+## Install Perlite with Authentication (Docker only)
 
-## Install
-Please make sure you read the [required settings](https://github.com/secure-77/Perlite/wiki/03---Perlite-Settings#required-settings) first!
+This fork adds simple authentication on top of Perlite and is intended for Docker deployment only. Non-Docker setups are not tested.
 
-You can download the latest release from github or git clone the project and use docker.
+### Steps:
 
-- For non Docker please check [Setup](https://github.com/secure-77/Perlite/wiki/01---Setup-(no-Docker))
-- For Docker, please check [Docker Setup](https://github.com/secure-77/Perlite/wiki/02---Setup-Docker)
+1. Clone this repository:
 
+   ```bash
+   git clone https://github.com/dewillepl/Perlite-auth.git
+   ```
+
+2. Build the Docker image:
+
+   ```bash
+   docker build -t perlite-auth-app .
+   ```
+
+3. Configure via `docker-compose.yml`:
+
+   ```yaml
+   environment:
+     - PERLITE_USERNAME=admin
+     - PERLITE_PASSWORD=admin
+   ```
+
+   For the rest of the configuration, please refer to the original [Docker Setup](https://github.com/secure-77/Perlite/wiki/02---Setup-Docker) documentation.
+
+4. Start the container:
+
+   ```bash
+   docker compose up -d
+   ```
 
 ## Wiki
 Please check the [wiki](https://github.com/secure-77/Perlite/wiki), here you will find further information, for example:

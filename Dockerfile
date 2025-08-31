@@ -15,8 +15,10 @@ COPY ./perlite/vendor/ ./vendor/
 # Copy application and authentication files
 COPY web/auth/ /var/www/perlite/auth/
 
-# Install dependencies and Nginx
-RUN apt-get update && apt-get install -y vim nginx supervisor \
+# Install dependencies, yaml extension, and Nginx
+RUN apt-get update && apt-get install -y vim nginx supervisor libyaml-dev libzip-dev \
+    && pecl install yaml \
+    && docker-php-ext-enable yaml \
     && rm -rf /var/lib/apt/lists/*
 
 # Inject logout button after line 156 in index.php
@@ -39,3 +41,4 @@ VOLUME ["/var/www/perlite/"]
 EXPOSE 80
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+

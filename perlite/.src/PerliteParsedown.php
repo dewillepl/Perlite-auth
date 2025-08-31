@@ -126,7 +126,8 @@ class PerliteParsedown extends Parsedown
                             <div class="multi-select-container">
                                 ';
 
-                foreach ($parsed["tags"] as $tag) {
+if (isset($parsed["tags"]) && is_array($parsed["tags"])) {
+    foreach ($parsed["tags"] as $tag) {
 
                     $Block = array(
                         'element' => array(
@@ -149,6 +150,7 @@ class PerliteParsedown extends Parsedown
             return $yamlText;
         }
     }
+}
 
     #
     # Callout (based on blockQuotes)

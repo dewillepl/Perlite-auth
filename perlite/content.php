@@ -11,6 +11,21 @@ use Perlite\PerliteParsedown;
 require_once __DIR__ . '/vendor/autoload.php';
 include('helper.php');
 
+// check for raw content request
+if (isset($_GET['raw']) && isset($_GET['mdfile'])) {
+    $requestFile = $_GET['mdfile'];
+    if (is_string($requestFile) && !empty($requestFile)) {
+        // call menu to populate avFiles
+        menu($rootDir);
+        if (substr($requestFile, 0, 1) !== '/') {
+            $requestFile = '/' . $requestFile;
+        }
+        $content = getContent($requestFile);
+        echo $content;
+        exit;
+    }
+}
+
 // check get params
 if (isset($_GET['mdfile'])) {
 	$requestFile = $_GET['mdfile'];

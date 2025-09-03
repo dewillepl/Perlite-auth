@@ -5,6 +5,7 @@ WORKDIR /var/www/perlite
 COPY ./perlite/index.php ./
 COPY ./perlite/helper.php ./
 COPY ./perlite/content.php ./
+COPY ./perlite/save.php ./
 COPY ./perlite/*.svg ./
 COPY ./perlite/*.ico ./
 COPY ./perlite/.styles/ ./.styles/

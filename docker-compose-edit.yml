@@ -6,7 +6,7 @@ services:
     container_name: perlite-edit
     restart: unless-stopped
     ports:
-      - "8080:80"
+      - "84:80"
     environment:
       # username&pass
       - PERLITE_USERNAME=admin
@@ -36,4 +36,3 @@ services:
       - SITE_HOMEPAGE=http://domain.example
     volumes:
       - ./perlite/Obsidian:/var/www/perlite/Obsidian
-      

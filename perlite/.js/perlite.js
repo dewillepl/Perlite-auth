@@ -146,8 +146,8 @@ function getContent(str, home = false, popHover = false, anchor = "") {
           if (title) {
 
             //hrefTitle = '<a href=?link=' + encodeURIComponent(title) + '>' + title + '</a>'
-            title = title.substring(1)
-            titleElements = title.split('/')
+            var filePath = title.substring(1);
+            titleElements = title.substring(1).split('/')
             title = titleElements.splice(-1)
             parentTitle = titleElements.join(' / ')
             if (parentTitle) {
@@ -159,9 +159,8 @@ function getContent(str, home = false, popHover = false, anchor = "") {
 
             $("title").text(title + ' - ' + $("p.vault").text() + ' - ' + $("p.perliteTitle").text());
 
-            // set edit button url
-            $('.clickable-icon.view-action[aria-label="Click to edit"]')
-              .attr("href", "obsidian://open?vault=" + encodeURIComponent($("p.vault").text()) + "&file=" + encodeURIComponent(title))
+            // Store the filepath for the edit button
+            $('.clickable-icon.view-action[aria-label="Click to edit"]').data('filepath', filePath);
           }
 
           // Outlines
@@ -946,6 +945,65 @@ function search(str) {
 };
 
 // edit button
+$('.clickable-icon.view-action[aria-label="Click to edit"]').off('click').on('click', function (e) {
+    e.preventDefault();
+    var filepath = $(this).data('filepath');
+    if (!filepath) {
+        console.error('Filepath not found for editing.');
+        return;
+    }
+
+    // Fetch raw content
+    $.ajax({
+        url: uriPath + "content.php?raw=true&mdfile=" + filepath,
+        success: function (rawContent) {
+            // Replace content with textarea for editing
+            $('#mdContent').html(
+                '<div id="editor-container">' +
+                '<textarea id="md-editor" style="width: 100%; height: 60vh; background-color: #282c34; color: #abb2bf; border: 1px solid #5c6370;"></textarea>' +
+                '<div id="editor-controls" style="margin-top: 10px;">' +
+                '<button id="save-btn" class="mod-cta">Save</button> ' +
+                '<button id="cancel-btn">Cancel</button>' +
+                '</div>' +
+                '</div>'
+            );
+            $('#md-editor').val(rawContent);
+
+            // Save button logic
+            $('#save-btn').on('click', function () {
+                var newContent = $('#md-editor').val();
+                $.ajax({
+                    url: uriPath + 'save.php',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        file: filepath,
+                        content: newContent
+                    }),
+                    success: function (response) {
+                        if (response.status === 'success') {
+                            getContent(filepath); // Reload content
+                        } else {
+                            alert('Error saving file: ' + response.message);
+                        }
+                    },
+                    error: function () {
+                        alert('Error saving file.');
+                    }
+                });
+            });
+
+            // Cancel button logic
+            $('#cancel-btn').on('click', function () {
+                getContent(filepath); // Reload original content
+            });
+        },
+        error: function() {
+            alert('Could not load file for editing.');
+        }
+    });
+});
+
 
 /**
  * @param {String} name

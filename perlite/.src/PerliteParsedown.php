@@ -634,6 +634,110 @@ class PerliteParsedown extends Parsedown
         return $Block;
     }
 
+    # override: base Parsedown splits the table header row with a plain
+    # explode('|', ...), which breaks on GFM-escaped pipes (e.g. an embedded
+    # image size modifier "![[img \| 500]]"). Body rows already use an
+    # escape-aware regex (see blockTableContinue); apply the same one here.
+    protected function blockTable($Line, array $Block = null)
+    {
+        if (!isset($Block) or isset($Block['type']) or isset($Block['interrupted'])) {
+            return;
+        }
+
+        if (strpos($Block['element']['text'], '|') !== false and chop($Line['text'], ' -:|') === '') {
+            $alignments = array();
+
+            $divider = $Line['text'];
+
+            $divider = trim($divider);
+            $divider = trim($divider, '|');
+
+            $dividerCells = explode('|', $divider);
+
+            foreach ($dividerCells as $dividerCell) {
+                $dividerCell = trim($dividerCell);
+
+                if ($dividerCell === '') {
+                    continue;
+                }
+
+                $alignment = null;
+
+                if ($dividerCell[0] === ':') {
+                    $alignment = 'left';
+                }
+
+                if (substr($dividerCell, -1) === ':') {
+                    $alignment = $alignment === 'left' ? 'center' : 'right';
+                }
+
+                $alignments[] = $alignment;
+            }
+
+            # ~
+
+            $HeaderElements = array();
+
+            $header = $Block['element']['text'];
+
+            $header = trim($header);
+            $header = trim($header, '|');
+
+            preg_match_all('/(?:(\\\\[|])|[^|`]|`[^`]+`|`)+/', $header, $headerMatches);
+            $headerCells = $headerMatches[0];
+
+            foreach ($headerCells as $index => $headerCell) {
+                $headerCell = trim($headerCell);
+
+                $HeaderElement = array(
+                    'name' => 'th',
+                    'text' => $headerCell,
+                    'handler' => 'line',
+                );
+
+                if (isset($alignments[$index])) {
+                    $alignment = $alignments[$index];
+
+                    $HeaderElement['attributes'] = array(
+                        'style' => 'text-align: ' . $alignment . ';',
+                    );
+                }
+
+                $HeaderElements[] = $HeaderElement;
+            }
+
+            # ~
+
+            $Block = array(
+                'alignments' => $alignments,
+                'identified' => true,
+                'element' => array(
+                    'name' => 'table',
+                    'handler' => 'elements',
+                ),
+            );
+
+            $Block['element']['text'][] = array(
+                'name' => 'thead',
+                'handler' => 'elements',
+            );
+
+            $Block['element']['text'][] = array(
+                'name' => 'tbody',
+                'handler' => 'elements',
+                'text' => array(),
+            );
+
+            $Block['element']['text'][0]['text'][] = array(
+                'name' => 'tr',
+                'handler' => 'elements',
+                'text' => $HeaderElements,
+            );
+
+            return $Block;
+        }
+    }
+
 
     # handle highlight code
     protected function inlineHighlight($Excerpt)
@@ -1263,7 +1367,8 @@ class PerliteParsedown extends Parsedown
             return;
         }
 
-        $raw = $matches[1];
+        // Unescape pipes escaped for GFM tables (e.g. "note \| label")
+        $raw = str_replace('\\|', '|', $matches[1]);
 
         // Split Obsidian-style: file|label|popup
         $parts = array_map('trim', explode('|', $raw));
@@ -1398,12 +1503,26 @@ class PerliteParsedown extends Parsedown
             return;
         }
 
-        $raw = $m[1];
+        // Unescape pipes escaped for GFM tables (e.g. "image.png \| 500")
+        $raw = str_replace('\\|', '|', $m[1]);
         $parts = explode('|', $raw);
 
         $file = trim($parts[0]);
         $mod1 = isset($parts[1]) ? trim($parts[1]) : null;
         $mod2 = isset($parts[2]) ? trim($parts[2]) : null;
+
+        // Resolve "../" traversal (e.g. Obsidian's "Insert attachment" relative paths)
+        // against the current note's folder, same as inlineInternalLink().
+        $savedPath = $this->path;
+        if (str_starts_with($file, '../')) {
+            $depth = substr_count($file, '../');
+            $segments = explode('/', $this->path);
+            $segments = array_slice($segments, 0, max(0, count($segments) - $depth));
+            $this->path = implode('/', $segments);
+            $file = preg_replace('#^(\.\./)+#', '', $file);
+            $parts[0] = $file;
+            $raw = implode('|', $parts);
+        }
 
         $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
         $src = rtrim($this->uriPath . $this->path, '/') . '/' . $file;
@@ -1412,9 +1531,11 @@ class PerliteParsedown extends Parsedown
             $ext = strtolower(pathinfo(explode('#', $file)[0], PATHINFO_EXTENSION));
         }
 
+        $result = null;
+
         /* ---------- PDF ---------- */
         if ($ext === 'pdf') {
-            return array(
+            $result = array(
                 'extent' => strlen($m[0]),
                 'element' => array(
                     'name' => 'embed',
@@ -1425,11 +1546,9 @@ class PerliteParsedown extends Parsedown
                     ),
                 ),
             );
-        }
-
-        /* ---------- Video / Audio ---------- */
-        if (in_array($ext, array('mp4', 'm4a'))) {
-            return array(
+        } elseif (in_array($ext, array('mp4', 'm4a'))) {
+            /* ---------- Video / Audio ---------- */
+            $result = array(
                 'extent' => strlen($m[0]),
                 'element' => array(
                     'name' => 'video',
@@ -1444,27 +1563,27 @@ class PerliteParsedown extends Parsedown
                         $src . '">Download ' . basename($file) . '</a>',
                 ),
             );
-        }
-
-        /* ---------- Image ---------- */
-        if (in_array($ext, $this->allowedImageTypes)) {
+        } elseif (in_array($ext, $this->allowedImageTypes)) {
+            /* ---------- Image ---------- */
 
             // syntax: image.png#caption=...&size=...
             if (str_contains($file, '#')) {
-                return $this->buildInternalImageFromFragment(
+                $result = $this->buildInternalImageFromFragment(
                     $file,
                     strlen($m[0])
                 );
+            } else {
+                // syntax: image.png|Caption|300x200|center
+                $result = $this->buildInternalImageFromLegacy(
+                    $raw,
+                    strlen($m[0])
+                );
             }
-
-            // syntax: image.png|Caption|300x200|center
-            return $this->buildInternalImageFromLegacy(
-                $raw,
-                strlen($m[0])
-            );
         }
 
+        $this->path = $savedPath;
 
+        return $result;
     }
 
     protected function buildInternalImage(string $file, array $attrs, int $extent)

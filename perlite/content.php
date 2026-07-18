@@ -200,7 +200,7 @@ function renderBaseTable($viewData)
 			if (is_array($value) || is_bool($value)) {
 				$value = '';
 			}
-			$html .= '<td>' . nl2br(htmlspecialchars((string) $value)) . '</td>';
+			$html .= '<td>' . nl2br(renderBaseCellValue((string) $value, $row['file']['folder'])) . '</td>';
 		}
 		$html .= '</tr>';
 	}
@@ -210,6 +210,65 @@ function renderBaseTable($viewData)
 	}
 
 	$html .= '</tbody></table>';
+	return $html;
+}
+
+// render a Bases cell's raw text, turning [[wikilinks]] and [markdown](links) into clickable links
+function renderBaseCellValue($value, $rowFolder)
+{
+	if ($value === '') {
+		return '';
+	}
+
+	$pattern = '/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]|\[([^\]]+)\]\((https?:\/\/[^)\s]+|mailto:[^)\s]+)\)/i';
+
+	if (!preg_match_all($pattern, $value, $matches, PREG_OFFSET_CAPTURE | PREG_SET_ORDER)) {
+		return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+	}
+
+	$html = '';
+	$cursor = 0;
+
+	foreach ($matches as $m) {
+		$full = $m[0][0];
+		$offset = $m[0][1];
+
+		$html .= htmlspecialchars(substr($value, $cursor, $offset - $cursor), ENT_QUOTES, 'UTF-8');
+
+		if (isset($m[1]) && $m[1][0] !== '') {
+			// wikilink: [[target|label]]
+			$target = trim($m[1][0]);
+			$label = (isset($m[2]) && $m[2][0] !== '') ? trim($m[2][0]) : $target;
+
+			$anchor = '';
+			$hashPos = strpos($target, '#');
+			if ($hashPos !== false) {
+				$anchor = substr($target, $hashPos + 1);
+				$target = substr($target, 0, $hashPos);
+			}
+			if (strcasecmp(substr($target, -3), '.md') === 0) {
+				$target = substr($target, 0, -3);
+			}
+
+			$path = ($rowFolder !== '' ? $rowFolder . '/' : '') . $target;
+			$jsPath = rawurlencode('/' . $path);
+			$jsAnchor = $anchor !== '' ? "'#" . rawurlencode($anchor) . "'" : "''";
+
+			$html .= '<a href="#" class="internal-link" onclick="getContent(\'' . $jsPath . '\', false, false, ' . $jsAnchor . '); return false;">'
+				. htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</a>';
+		} else {
+			// markdown link: [label](url)
+			$label = $m[3][0];
+			$url = $m[4][0];
+			$html .= '<a href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '" class="external-link" target="_blank" rel="noopener noreferrer">'
+				. htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</a>';
+		}
+
+		$cursor = $offset + strlen($full);
+	}
+
+	$html .= htmlspecialchars(substr($value, $cursor), ENT_QUOTES, 'UTF-8');
+
 	return $html;
 }
 

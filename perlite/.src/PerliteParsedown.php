@@ -1497,6 +1497,68 @@ class PerliteParsedown extends Parsedown
         return $result;
     }
 
+    // Resolve an embed's file reference against the note's folder, tolerating
+    // Obsidian's occasional off-by-one "../" depth. Returns [$path, $file] where
+    // $path is the folder to prefix and $file is the traversal-stripped filename.
+    protected function resolveEmbedPath($file)
+    {
+        $depth = 0;
+        $bareFile = $file;
+
+        if (preg_match('#^(\.\./)+#', $file, $m)) {
+            $depth = substr_count($m[0], '../');
+            $bareFile = substr($file, strlen($m[0]));
+        }
+
+        foreach ([$depth, $depth - 1, $depth + 1] as $candidateDepth) {
+            if ($candidateDepth < 0) {
+                continue;
+            }
+
+            $segments = explode('/', $this->path);
+            $segments = array_slice($segments, 0, max(0, count($segments) - $candidateDepth));
+            $candidatePath = implode('/', $segments);
+
+            if (is_file(ltrim($candidatePath . '/' . $bareFile, '/'))) {
+                return [$candidatePath, $bareFile];
+            }
+        }
+
+        $vaultRoot = explode('/', $this->path)[0] ?? $this->path;
+        $found = $this->findAttachmentByBasename($vaultRoot, basename($bareFile));
+        if ($found !== null) {
+            $dir = dirname($found);
+            return [$dir === '.' ? '' : $dir, basename($found)];
+        }
+
+        // Nothing on disk matches any depth — keep the author's original path so
+        // the (still broken) link at least reflects what's written in the note.
+        $segments = explode('/', $this->path);
+        $segments = array_slice($segments, 0, max(0, count($segments) - $depth));
+        return [implode('/', $segments), $bareFile];
+    }
+
+    // Vault-wide fallback lookup by filename, mirroring how Obsidian itself
+    // resolves attachment links (by name, not by literal relative path).
+    protected function findAttachmentByBasename($dir, $basename)
+    {
+        if ($dir === '' || !is_dir($dir)) {
+            return null;
+        }
+
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS)
+        );
+
+        foreach ($iterator as $fileInfo) {
+            if ($fileInfo->getFilename() === $basename) {
+                return $fileInfo->getPathname();
+            }
+        }
+
+        return null;
+    }
+
     protected function inlineInternalEmbed($Excerpt)
     {
         if (!preg_match('/^!\[\[(.+?)\]\]/', $Excerpt['text'], $m)) {
@@ -1512,17 +1574,13 @@ class PerliteParsedown extends Parsedown
         $mod2 = isset($parts[2]) ? trim($parts[2]) : null;
 
         // Resolve "../" traversal (e.g. Obsidian's "Insert attachment" relative paths)
-        // against the current note's folder, same as inlineInternalLink().
+        // against the current note's folder, same as inlineInternalLink(). Obsidian
+        // sometimes emits a link with one "../" too many/few, so prefer whichever
+        // depth actually exists on disk, falling back to a vault-wide filename search.
         $savedPath = $this->path;
-        if (str_starts_with($file, '../')) {
-            $depth = substr_count($file, '../');
-            $segments = explode('/', $this->path);
-            $segments = array_slice($segments, 0, max(0, count($segments) - $depth));
-            $this->path = implode('/', $segments);
-            $file = preg_replace('#^(\.\./)+#', '', $file);
-            $parts[0] = $file;
-            $raw = implode('|', $parts);
-        }
+        [$this->path, $file] = $this->resolveEmbedPath($file);
+        $parts[0] = $file;
+        $raw = implode('|', $parts);
 
         $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
         $src = rtrim($this->uriPath . $this->path, '/') . '/' . $file;

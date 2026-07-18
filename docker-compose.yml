@@ -17,7 +17,7 @@ services:
       - HIDE_FOLDERS=docs,private,trash
       - HIDDEN_FILE_ACCESS=false
       - LINE_BREAKS=true
-      - ABSOLUTE_PATHS=true
+      - ABSOLUTE_PATHS=false
       - ALLOWED_FILE_LINK_TYPES=pdf,mp4
       - HIGHLIGHTJS_LANGS=powershell
       - DISABLE_POP_HOVER=false

@@ -2,10 +2,8 @@ FROM php:8.2-fpm
 
 WORKDIR /var/www/perlite
 
-# Install dependencies, yaml extension, and Nginx (rarely changes, kept early for layer caching)
-RUN apt-get update && apt-get install -y vim nginx supervisor libyaml-dev libzip-dev \
-    && pecl install yaml \
-    && docker-php-ext-enable yaml \
+# Install dependencies and Nginx (rarely changes, kept early for layer caching)
+RUN apt-get update && apt-get install -y vim nginx supervisor libzip-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy application files

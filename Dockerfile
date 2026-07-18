@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y vim nginx supervisor libyaml-dev libzip
 
 # Inject logout button after line 156 in index.php
 COPY logout-index-patch.html /tmp/logout-index-patch.html
-RUN sed -i '156r /tmp/logout-index-patch.html' /var/www/perlite/index.php
+RUN sed -i '182r /tmp/logout-index-patch.html' /var/www/perlite/index.php
 
 # Set correct permissions for web files
 RUN chown -R www-data:www-data /var/www/perlite

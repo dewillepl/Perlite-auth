@@ -20,3 +20,5 @@ perlite/.scripts/canvas.js
 perlite/sec.jpg
 perlite/Demo/Demo Documents/test
 perlite/Demo/Demo Documents/test/*
+.DS_Store
+Obsidian/*

@@ -1,0 +1,13 @@
+.git
+.github
+.gitignore
+.gitattributes
+*.md
+LICENSE
+SECURITY.md
+screenshots
+docker-compose*.yml
+perlite/Demo
+perlite/.scripts
+perlite/Obsidian
+.DS_Store

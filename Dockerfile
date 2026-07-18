@@ -2,31 +2,23 @@ FROM php:8.2-fpm
 
 WORKDIR /var/www/perlite
 
-COPY ./perlite/index.php ./
-COPY ./perlite/helper.php ./
-COPY ./perlite/content.php ./
-COPY ./perlite/*.svg ./
-COPY ./perlite/*.ico ./
-COPY ./perlite/.styles/ ./.styles/
-COPY ./perlite/.js/ ./.js/
-COPY ./perlite/.src/ ./.src/
-COPY ./perlite/vendor/ ./vendor/
-
-# Copy application and authentication files
-COPY web/auth/ /var/www/perlite/auth/
-
-# Install dependencies, yaml extension, and Nginx
-RUN apt-get update && apt-get install -y vim nginx supervisor libyaml-dev libzip-dev \
-    && pecl install yaml \
-    && docker-php-ext-enable yaml \
+# Install dependencies and Nginx (rarely changes, kept early for layer caching)
+RUN apt-get update && apt-get install -y vim nginx supervisor libzip-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Inject logout button after line 156 in index.php
-COPY logout-index-patch.html /tmp/logout-index-patch.html
-RUN sed -i '182r /tmp/logout-index-patch.html' /var/www/perlite/index.php
+# Copy application files
+COPY --chown=www-data:www-data ./perlite/index.php ./
+COPY --chown=www-data:www-data ./perlite/helper.php ./
+COPY --chown=www-data:www-data ./perlite/content.php ./
+COPY --chown=www-data:www-data ./perlite/*.svg ./
+COPY --chown=www-data:www-data ./perlite/*.ico ./
+COPY --chown=www-data:www-data ./perlite/.styles/ ./.styles/
+COPY --chown=www-data:www-data ./perlite/.js/ ./.js/
+COPY --chown=www-data:www-data ./perlite/.src/ ./.src/
+COPY --chown=www-data:www-data ./perlite/vendor/ ./vendor/
 
-# Set correct permissions for web files
-RUN chown -R www-data:www-data /var/www/perlite
+# Copy authentication files
+COPY --chown=www-data:www-data web/auth/ /var/www/perlite/auth/
 
 # Copy configurations
 COPY web/config/perlite.conf /etc/nginx/sites-available/default
@@ -41,4 +33,3 @@ VOLUME ["/var/www/perlite/"]
 EXPOSE 80
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
-

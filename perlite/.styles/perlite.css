@@ -227,3 +227,93 @@ h6:hover .copy-icon {
   }
 
 }
+/* Obsidian Bases (.base) table views */
+
+.perlite-base-link .nav-file-tag-icon {
+  margin-right: 4px;
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+.bases-view {
+  padding: 10px 20px 30px 20px;
+}
+
+.bases-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-bottom: 1px solid var(--background-modifier-border, #444);
+  margin-bottom: 12px;
+}
+
+.bases-tab {
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 6px 6px 0 0;
+  color: var(--text-muted, #999);
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+
+.bases-tab:hover {
+  color: var(--text-normal);
+  background-color: var(--background-secondary, rgba(255, 255, 255, 0.05));
+}
+
+.bases-tab.is-active {
+  color: var(--text-normal);
+  background-color: var(--background-secondary, rgba(255, 255, 255, 0.08));
+  border-bottom: 2px solid var(--interactive-accent, #7b6cd9);
+}
+
+.bases-table-wrap {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+table.bases-table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.85em;
+}
+
+table.bases-table th,
+table.bases-table td {
+  text-align: left;
+  padding: 6px 10px;
+  border: 1px solid var(--background-modifier-border, #444);
+  vertical-align: top;
+  overflow-wrap: break-word;
+  min-width: 100px;
+}
+
+table.bases-table th {
+  background-color: var(--background-secondary, rgba(255, 255, 255, 0.06));
+  color: var(--text-normal);
+  white-space: nowrap;
+}
+
+table.bases-table td {
+  color: var(--text-normal);
+}
+
+table.bases-table.bases-row-medium td {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+table.bases-table.bases-row-tall td {
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+table.bases-table.bases-row-extra td {
+  padding-top: 22px;
+  padding-bottom: 22px;
+}
+
+.bases-empty {
+  text-align: center !important;
+  color: var(--text-muted, #999);
+}

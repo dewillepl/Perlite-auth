@@ -553,6 +553,63 @@ function getContent(str, home = false, popHover = false, anchor = "") {
 };
 
 /**
+ * Load an Obsidian Bases (.base) file and render its table views.
+ * @param {String} str
+ */
+function getBase(str) {
+
+  if (str.length == 0) {
+    document.getElementById("mdContent").innerHTML = "";
+    return;
+  }
+
+  requestPath = uriPath + "content.php?mdfile=" + str;
+
+  $.ajax({
+    url: requestPath, success: function (result) {
+
+      $("#mdContent").html(result);
+
+      var title = $("div.mdTitleHide").first().text();
+      if (title) {
+        title = title.substring(1);
+        titleElements = title.split('/');
+        title = titleElements.splice(-1);
+        parentTitle = titleElements.join(' / ');
+        if (parentTitle) {
+          parentTitle = parentTitle + ' / ';
+        }
+        $("div.view-header-title-parent").text(parentTitle);
+        $("div.view-header-title").text(title);
+        $(".inline-title").text(title);
+        $("title").text(title + ' - ' + $("p.vault").text() + ' - ' + $("p.perliteTitle").text());
+      }
+
+      $("#toc").html("");
+      $('#mytags').html("");
+      $('#tags_container').css('display', 'none');
+
+      target = slugURL(str);
+      window.history.pushState({}, "", location.protocol + '//' + location.host + uriPath + target);
+    }
+  });
+}
+
+/**
+ * Switch the active view tab within a rendered Bases (.base) table.
+ * @param {Element} tabElement
+ * @param {Number} index
+ */
+function switchBaseView(tabElement, index) {
+
+  var wrap = $(tabElement).closest('.bases-view');
+  wrap.find('.bases-tab').removeClass('is-active');
+  $(tabElement).addClass('is-active');
+  wrap.find('.bases-table-wrap').css('display', 'none');
+  wrap.find('.bases-table-wrap[data-bases-panel="' + index + '"]').css('display', '');
+}
+
+/**
  * Gets the state of the graph setting inputs as a list.
  * The options in order are: \
  * [showNoLinks, showTags, sizeDepsOnConns]

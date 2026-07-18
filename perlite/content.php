@@ -7,6 +7,7 @@
  */
 
 use Perlite\PerliteParsedown;
+use Perlite\PerliteBasesRenderer;
 
 require_once __DIR__ . '/vendor/autoload.php';
 include('helper.php');
@@ -17,7 +18,13 @@ if (isset($_GET['mdfile'])) {
 
 	if (is_string($requestFile)) {
 		if (!empty($requestFile)) {
-			parseContent($requestFile);
+			global $avBaseFiles;
+			menu($rootDir);
+			if (in_array($requestFile, $avBaseFiles, true)) {
+				renderBaseView($requestFile);
+			} else {
+				parseContent($requestFile);
+			}
 		}
 	}
 }
@@ -131,6 +138,79 @@ function getContent($requestFile)
 	}
 
 	return $content;
+}
+
+// render an Obsidian Bases (.base) file as a tabbed set of table views
+function renderBaseView($requestFile)
+{
+	global $rootDir;
+
+	$absolutePath = $rootDir . $requestFile . '.base';
+	if (!is_file($absolutePath)) {
+		return;
+	}
+
+	$baseConfig = PerliteBasesRenderer::loadBaseFile($absolutePath);
+	$allRows = PerliteBasesRenderer::collectRows($rootDir);
+
+	$content = '
+	<div style="display: none">
+		<div class="mdTitleHide">' . htmlspecialchars($requestFile) . '</div>
+		<div class="wordCount">0</div>
+		<div class="charCount">0</div>
+	</div>';
+
+	$content .= '<div class="bases-view">';
+	$content .= '<div class="bases-tabs">';
+	foreach ($baseConfig['views'] as $i => $view) {
+		$active = $i === 0 ? ' is-active' : '';
+		$viewName = $view['name'] ?? ('View ' . ($i + 1));
+		$content .= '<div class="bases-tab' . $active . '" onclick="switchBaseView(this, ' . $i . ');">' . htmlspecialchars($viewName) . '</div>';
+	}
+	$content .= '</div>';
+
+	foreach ($baseConfig['views'] as $i => $view) {
+		$viewData = PerliteBasesRenderer::buildView($baseConfig, $view, $allRows);
+		$display = $i === 0 ? '' : ' style="display:none;"';
+		$content .= '<div class="bases-table-wrap" data-bases-panel="' . $i . '"' . $display . '>';
+		$content .= renderBaseTable($viewData);
+		$content .= '</div>';
+	}
+	$content .= '</div>';
+
+	echo $content;
+}
+
+function renderBaseTable($viewData)
+{
+	$rowHeightClass = 'bases-row-' . preg_replace('/[^a-z]/', '', strtolower($viewData['rowHeight'] ?: 'default'));
+	$columnCount = max(1, count($viewData['columns']));
+
+	$html = '<table class="bases-table ' . $rowHeightClass . '"><thead><tr>';
+	foreach ($viewData['columns'] as $col) {
+		$style = $col['width'] ? ' style="width:' . (int) $col['width'] . 'px;"' : '';
+		$html .= '<th' . $style . '>' . htmlspecialchars($col['displayName']) . '</th>';
+	}
+	$html .= '</tr></thead><tbody>';
+
+	foreach ($viewData['rows'] as $row) {
+		$html .= '<tr>';
+		foreach ($viewData['columns'] as $col) {
+			$value = $col['isFormula'] ? ($row['formulas'][$col['name']] ?? '') : ($row['properties'][$col['name']] ?? '');
+			if (is_array($value) || is_bool($value)) {
+				$value = '';
+			}
+			$html .= '<td>' . nl2br(htmlspecialchars((string) $value)) . '</td>';
+		}
+		$html .= '</tr>';
+	}
+
+	if (empty($viewData['rows'])) {
+		$html .= '<tr><td colspan="' . $columnCount . '" class="bases-empty">No results found.</td></tr>';
+	}
+
+	$html .= '</tbody></table>';
+	return $html;
 }
 
 ?>

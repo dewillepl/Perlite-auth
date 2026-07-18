@@ -19,6 +19,7 @@ if (file_exists("settings.php")) {
 
 
 $avFiles = array();
+$avBaseFiles = array();
 
 // replace with your Vault Folder
 if (empty($rootDir))
@@ -204,6 +205,7 @@ function menu($dir, $folder = '')
 
 	global $hiddenFileAccess;
 	global $avFiles;
+	global $avBaseFiles;
   global $useZettelkastenFilenames;
 	$html = '';
 	// get all files from current dir
@@ -274,6 +276,31 @@ function menu($dir, $folder = '')
       <div class="tree-item nav-file">
           <div class="nav-file-title perlite-link" onclick="getContent(\'' . $pathCleanForJS . '\');" id="' . htmlspecialchars($elementId) . '">
               <div class="nav-file-title-content">' . htmlspecialchars($displayTitle) . '</div>
+          </div>
+      </div>
+      ';
+    } else if (isBaseFile($file)) {
+      $pathInfo = getFileInfos($file);
+      $relativePathForURL = $pathInfo[0];
+      $baseFilenameWithoutExtension = $pathInfo[1];
+
+      $urlClickPath = '/' . $relativePathForURL;
+      array_push($avBaseFiles, $urlClickPath);
+      $pathCleanForJS = rawurlencode($urlClickPath);
+
+      $elementId = 'baseid-' . preg_replace('/[^A-Za-z0-9\-_]/', '_', $urlClickPath);
+      $elementId = str_replace('/', '_', $elementId);
+
+      $html .= '
+      <div class="tree-item nav-file">
+          <div class="nav-file-title perlite-link perlite-base-link" onclick="getBase(\'' . $pathCleanForJS . '\');" id="' . htmlspecialchars($elementId) . '">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon lucide-table nav-file-tag-icon">
+                  <path d="M12 3v18"></path>
+                  <rect width="18" height="18" x="3" y="3" rx="2"></rect>
+                  <path d="M3 9h18"></path>
+                  <path d="M3 15h18"></path>
+              </svg>
+              <div class="nav-file-title-content">' . htmlspecialchars($baseFilenameWithoutExtension) . '</div>
           </div>
       </div>
       ';
@@ -392,12 +419,27 @@ function isMDFile($file)
 	return false;
 }
 
+// check if file is an Obsidian Bases file
+function isBaseFile($file)
+{
+
+	$fileinfo = pathinfo($file);
+
+	if (isset($fileinfo['extension']) and strtolower($fileinfo['extension']) == 'base') {
+		return true;
+	}
+
+	return false;
+}
+
 function getFileInfos($file)
 {
 
 	global $rootDir;
 	$mdFile = mb_basename($file);
-	if (strcmp(substr($mdFile, -3), ".md") === 0) {
+	if (strcasecmp(substr($mdFile, -5), ".base") === 0) {
+		$mdFile = substr($mdFile, 0, -5);
+	} elseif (strcmp(substr($mdFile, -3), ".md") === 0) {
 		$mdFile = substr($mdFile, 0, -3);
 	}
 

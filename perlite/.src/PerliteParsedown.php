@@ -1266,7 +1266,7 @@ class PerliteParsedown extends Parsedown
         $raw = $matches[1];
 
         // Split Obsidian-style: file|label|popup
-        $parts = explode('|', $raw);
+        $parts = array_map('trim', explode('|', $raw));
         $linkFile = $parts[0];
 
         $ext = pathinfo($linkFile, PATHINFO_EXTENSION);
@@ -1401,9 +1401,9 @@ class PerliteParsedown extends Parsedown
         $raw = $m[1];
         $parts = explode('|', $raw);
 
-        $file = $parts[0];
-        $mod1 = $parts[1] ?? null;
-        $mod2 = $parts[2] ?? null;
+        $file = trim($parts[0]);
+        $mod1 = isset($parts[1]) ? trim($parts[1]) : null;
+        $mod2 = isset($parts[2]) ? trim($parts[2]) : null;
 
         $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
         $src = rtrim($this->uriPath . $this->path, '/') . '/' . $file;
@@ -1534,7 +1534,7 @@ class PerliteParsedown extends Parsedown
     protected function buildInternalImageFromLegacy(string $raw, int $extent)
     {
         $parts = explode('|', $raw);
-        $file = array_shift($parts);
+        $file = trim(array_shift($parts));
 
         $attrs = [
             'caption' => null,

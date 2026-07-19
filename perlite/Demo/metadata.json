@@ -1,29 +1,25 @@
 [
   {
-    "fileName": "README",
-    "relativePath": "README.md",
+    "fileName": "HOME",
+    "relativePath": "HOME.md",
     "tags": [
       "tag-test"
     ],
     "headings": [
       {
-        "heading": "Perlite",
+        "heading": "Welcome to Perlite-Auth",
         "level": 1
       },
       {
-        "heading": "Documentation on Github",
+        "heading": "What's new in Perlite-Auth",
         "level": 2
       },
       {
-        "heading": "Features",
+        "heading": "Explore this demo vault",
         "level": 2
       },
       {
-        "heading": "Changelog",
-        "level": 2
-      },
-      {
-        "heading": "Why Perlite?",
+        "heading": "Learn more",
         "level": 2
       },
       {

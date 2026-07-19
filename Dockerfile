@@ -22,6 +22,7 @@ COPY --chown=www-data:www-data web/auth/ /var/www/perlite/auth/
 
 # Copy configurations
 COPY web/config/perlite.conf /etc/nginx/sites-available/default
+COPY web/config/rate-limit.conf /etc/nginx/conf.d/rate-limit.conf
 COPY web/config/supervisord.conf /etc/supervisord.conf
 
 # Enable the Nginx site

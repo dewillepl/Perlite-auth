@@ -24,3 +24,4 @@ perlite/Demo/Demo Documents/test/*
 perlite/Obsidian
 perlite/Obsidian/*
 Claude*.md
+.env

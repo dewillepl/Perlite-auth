@@ -63,13 +63,24 @@ This fork adds simple authentication on top of Perlite and is intended for Docke
    ```
    (If you use a different folder name than "Obsidian", you must update the `Image Mapping` block in the `perlite.conf` file  accordingly.)
 
-4. Configure via `docker-compose.yml`:
+4. Configure credentials via `.env` (copy `.env.example` to `.env`, which is gitignored so real credentials never get committed):
 
-   ```yaml
-   environment:
-     - PERLITE_USERNAME=admin
-     - PERLITE_PASSWORD=admin
+   ```bash
+   cp .env.example .env
    ```
+
+   ```
+   PERLITE_USERNAME=admin
+   PERLITE_PASSWORD_HASH=<bcrypt hash>
+   ```
+
+   Generate the bcrypt hash for your password and paste the output straight into `.env` as `PERLITE_PASSWORD_HASH`:
+
+   ```bash
+   docker run --rm perlite-auth-app php -r "echo password_hash('yourpassword', PASSWORD_BCRYPT), PHP_EOL;" | sed 's/\$/$$/g'
+   ```
+
+   The `sed` doubles every `$` in the hash (e.g. `$2y$10$...` becomes `$$2y$$10$$...`) — required because docker-compose treats a single `$` in `.env` as variable interpolation and will silently corrupt the hash otherwise. Quoting the value does **not** prevent this; the `$$` escaping is the only fix.
 
    For the rest of the configuration, please refer to the original [Docker Setup](https://github.com/secure-77/Perlite/wiki/02---Setup-Docker) documentation.
 

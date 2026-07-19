@@ -7,11 +7,9 @@ services:
     restart: unless-stopped
     ports:
       - "8080:80"
+    env_file:
+      - .env
     environment:
-      # username&pass
-      - PERLITE_USERNAME=admin
-      - PERLITE_PASSWORD=admin
-
       # Perlite env
       - NOTES_PATH=Obsidian
       - HIDE_FOLDERS=docs,private,trash

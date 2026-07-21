@@ -93,6 +93,21 @@ function slugURL(targetPath) {
 
 
 /**
+ * walk up from an element to find its nearest scrollable ancestor
+ * @param {HTMLElement} el
+ */
+function findScrollParent(el) {
+  el = el && el.parentElement;
+  while (el) {
+    if (el.scrollHeight > el.clientHeight + 1) {
+      return el;
+    }
+    el = el.parentElement;
+  }
+  return document.scrollingElement || document.documentElement;
+}
+
+/**
  * scroll to anchor
  * @param {String} aid
  */
@@ -108,8 +123,9 @@ function scrollToAnchor(aid) {
  * @param {Boolean} home
  * @param {Boolean} popHover
  * @param {String} anchor
+ * @param {Boolean} preserveScroll keep the reading pane's scroll position (used by the silent background refresh)
  */
-function getContent(str, home = false, popHover = false, anchor = "") {
+function getContent(str, home = false, popHover = false, anchor = "", preserveScroll = false) {
 
   // reset content if request is empty
   if (str.length == 0) {
@@ -130,9 +146,16 @@ function getContent(str, home = false, popHover = false, anchor = "") {
 
     mdContent = $("#mdContent")[0]
 
+    var restoreScrollParent = null;
+    var restoreScrollTop = 0;
+    if (preserveScroll) {
+      restoreScrollParent = findScrollParent(mdContent);
+      restoreScrollTop = restoreScrollParent.scrollTop;
+    }
+
 
     $.ajax({
-      url: requestPath, success: function (result) {
+      url: requestPath, cache: false, success: function (result) {
 
         if (popHover == false) {
 
@@ -234,6 +257,16 @@ function getContent(str, home = false, popHover = false, anchor = "") {
             target = slugURL(str)
             window.history.pushState({}, "", location.protocol + '//' + location.host + uriPath + target + anchor);
 
+            // remember which note is open so the background watcher can
+            // silently refresh it if it changes on disk while it's being viewed
+            if (currentOpenFilePath !== str) {
+              currentOpenFileMtime = null;
+            }
+            currentOpenFilePath = str;
+          }
+
+          if (preserveScroll && restoreScrollParent) {
+            restoreScrollParent.scrollTop = restoreScrollTop;
           }
 
           // add Tag section
@@ -566,7 +599,7 @@ function getBase(str) {
   requestPath = uriPath + "content.php?mdfile=" + str;
 
   $.ajax({
-    url: requestPath, success: function (result) {
+    url: requestPath, cache: false, success: function (result) {
 
       $("#mdContent").html(result);
 
@@ -1044,7 +1077,7 @@ function search(str) {
     str = encodeURIComponent(str);
 
     $.ajax({
-      url: uriPath + "content.php?search=" + str, success: function (result) {
+      url: uriPath + "content.php?search=" + str, cache: false, success: function (result) {
 
         $("div.search-results-children").html(result);
         let preCodes = $("div.search-results-children").find("pre code")
@@ -1188,6 +1221,161 @@ function openNavMenu(target, openAll = false) {
 function hideTooltip() {
   $('.tooltip').css("display", "none")
 };
+
+
+/**
+ * vault auto-refresh
+ *
+ * Polls a cheap hash of the vault's note/base file paths + mtimes. When it changes
+ * (e.g. rsync synced a new/edited note from Obsidian), the file tree is re-fetched
+ * and swapped in, while preserving which folders are currently expanded and which
+ * file is highlighted as active.
+ */
+var vaultStateHash = null;
+var vaultWatcherIntervalMs = 10000;
+
+// the note currently shown in the reading pane, and the mtime it was last seen at -
+// set by getContent() whenever a real note (not the home page) is opened
+var currentOpenFilePath = null;
+var currentOpenFileMtime = null;
+
+function startVaultWatcher() {
+
+  checkVaultState();
+  checkOpenFileState();
+  setInterval(function () {
+    checkVaultState();
+    checkOpenFileState();
+  }, vaultWatcherIntervalMs);
+}
+
+function checkOpenFileState() {
+
+  if (!currentOpenFilePath) {
+    return;
+  }
+
+  var pathAtRequestTime = currentOpenFilePath;
+
+  $.ajax({
+    url: uriPath + "content.php?fileState=" + pathAtRequestTime,
+    cache: false,
+    success: function (mtime) {
+
+      // the user navigated to a different note while this was in flight
+      if (pathAtRequestTime !== currentOpenFilePath) {
+        return;
+      }
+
+      mtime = $.trim(mtime);
+
+      // an mtime is always digits; anything else (empty, login page, ...) is ignored
+      if (!/^[0-9]+$/.test(mtime)) {
+        return;
+      }
+
+      if (currentOpenFileMtime === null) {
+        // first check just establishes the baseline, nothing to refresh yet
+        currentOpenFileMtime = mtime;
+        return;
+      }
+
+      if (mtime !== currentOpenFileMtime) {
+        currentOpenFileMtime = mtime;
+        // re-render in place, preserving the reading pane's scroll position
+        getContent(pathAtRequestTime, false, false, "", true);
+      }
+    },
+    error: function () {
+      // transient network hiccup - just try again on the next interval tick
+    }
+  });
+}
+
+function checkVaultState() {
+
+  $.ajax({
+    url: uriPath + "content.php?vaultState=1",
+    cache: false,
+    success: function (hash) {
+
+      hash = $.trim(hash);
+
+      // an md5 is always 32 hex chars; anything else means the session expired
+      // and we got a login page (or similar) back instead - ignore it rather
+      // than treating it as a "changed" vault state
+      if (!/^[a-f0-9]{32}$/.test(hash)) {
+        return;
+      }
+
+      if (vaultStateHash === null) {
+        // first check just establishes the baseline, nothing to refresh yet
+        vaultStateHash = hash;
+        return;
+      }
+
+      if (hash !== vaultStateHash) {
+        // only commit the new baseline once the tree has actually been refreshed,
+        // so a failed/aborted refresh gets retried on the next tick instead of
+        // silently being considered "seen"
+        refreshVaultMenu(hash);
+      }
+    },
+    error: function () {
+      // transient network hiccup - just try again on the next interval tick
+    }
+  });
+}
+
+function refreshVaultMenu(newHash) {
+
+  // remember which folders are currently expanded (by their stable collapse target id)
+  var expandedTargets = [];
+  $('.nav-folder-title[data-bs-target]').each(function () {
+    var el = $(this);
+    if (!el.find('.collapse-icon').hasClass('is-collapsed')) {
+      expandedTargets.push(el.attr('data-bs-target'));
+    }
+  });
+
+  // remember the currently active file so we can re-highlight it after the swap
+  var activeId = $('.nav-file-title.perlite-link-active').attr('id');
+
+  $.ajax({
+    url: uriPath + "content.php?menu=1",
+    cache: false,
+    success: function (html) {
+
+      // session expired mid-poll and we got the login page back instead of
+      // tree markup - bail out rather than injecting it into the sidebar
+      if (/<!DOCTYPE|<html/i.test(html)) {
+        return;
+      }
+
+      $('#vaultFileMenu').html(html);
+
+      // re-expand folders that were open before the refresh
+      expandedTargets.forEach(function (target) {
+        var children = $(target);
+        if (children.length) {
+          children.removeClass('collapse');
+          children.prev().find('.collapse-icon').removeClass('is-collapsed');
+        }
+      });
+
+      // re-highlight the active file, if it still exists
+      if (activeId) {
+        $('#' + activeId).addClass('perlite-link-active is-active');
+      }
+
+      vaultStateHash = newHash;
+    },
+    error: function () {
+      // transient network hiccup - vaultStateHash stays as-is, so the next
+      // poll still sees a mismatch and retries the refresh
+    }
+  });
+}
 
 
 
@@ -1347,13 +1535,19 @@ $(document).ready(function () {
 
 
   //mark current active menu item
-  $('.perlite-link').click(function (e) {
+  // delegated on document so it keeps working after refreshVaultMenu() swaps in new nodes
+  $(document).on('click', '.perlite-link', function (e) {
 
     e.preventDefault();
     $('.perlite-link').removeClass('perlite-link-active is-active');
 
     $(this).addClass('perlite-link-active is-active');
   });
+
+
+  // auto-refresh the file tree when files change on disk (e.g. rsync from Obsidian),
+  // without a full page reload and without collapsing folders the user has opened
+  startVaultWatcher();
 
 
 
@@ -2010,7 +2204,7 @@ $(document).ready(function () {
   // info modal
   $('.clickable-icon.side-dock-ribbon-action[aria-label="Help"]').click(function (e) {
     $.ajax({
-      url: uriPath + "content.php?about", success: function (result) {
+      url: uriPath + "content.php?about", cache: false, success: function (result) {
 
         $("div.aboutContent").html(result);
         $("#about").css("display", "flex");

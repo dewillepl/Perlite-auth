@@ -58,6 +58,34 @@ if (isset($_GET['home'])) {
 }
 
 
+// lightweight vault change check, polled by the frontend to auto-refresh
+// the file tree without a full page reload
+if (isset($_GET['vaultState'])) {
+	echo md5(getVaultStateSignature($rootDir));
+}
+
+// refreshed file tree markup, fetched only after vaultState reports a change
+if (isset($_GET['menu'])) {
+	echo menu($rootDir);
+}
+
+// mtime of a single note, used to silently refresh the currently open note
+// if it gets edited on disk while the user is viewing it
+if (isset($_GET['fileState'])) {
+	$requestFile = $_GET['fileState'];
+
+	if (is_string($requestFile) && !empty($requestFile)) {
+		menu($rootDir);
+		if (in_array($requestFile, $avFiles, true)) {
+			$fp = $rootDir . $requestFile . '.md';
+			if (is_file($fp)) {
+				echo filemtime($fp);
+			}
+		}
+	}
+}
+
+
 // parse the md to html
 function parseContent($requestFile)
 {

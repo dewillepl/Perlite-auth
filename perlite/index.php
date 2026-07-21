@@ -298,7 +298,7 @@ $jsonGraphData = getfullGraph($rootDir);
                                         </div>
                                         <div class="tree-item-children nav-folder-children">
                                             <div style="width: 276px; height: 0.1px; margin-bottom: 0px;"></div>
-                                            <?php echo $menu ?>
+                                            <div id="vaultFileMenu"><?php echo $menu ?></div>
                                         </div>
                                     </div>
                                 </div>

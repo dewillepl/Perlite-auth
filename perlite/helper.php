@@ -309,6 +309,28 @@ function menu($dir, $folder = '')
   return $html;
 }
 
+// build a lightweight signature (path + mtime of every note/base file) used to detect
+// external vault changes (e.g. rsync sync from Obsidian) without reading file contents
+function getVaultStateSignature($dir)
+{
+
+	$state = '';
+	$files = glob($dir . '/*');
+	sort($files);
+
+	foreach ($files as $file) {
+		if (is_dir($file)) {
+			if (isValidFolder($file)) {
+				$state .= getVaultStateSignature($file);
+			}
+		} else if (isMDFile($file) || isBaseFile($file)) {
+			$state .= $file . ':' . filemtime($file) . ';';
+		}
+	}
+
+	return $state;
+}
+
 function doSearch($dir, $searchfor)
 {
 

@@ -155,6 +155,7 @@ function getContent($requestFile)
 	global $path;
 	global $cleanFile;
 	global $rootDir;
+	global $about;
 	$content = '';
 
 	// check if file is in array
@@ -162,7 +163,19 @@ function getContent($requestFile)
 		$cleanFile = $requestFile;
 		$n = strrpos($requestFile, "/");
 		$path = substr($requestFile, 0, $n);
-		$content .= file_get_contents($rootDir . $requestFile . '.md', true);
+
+		$filePath = $rootDir . $requestFile . '.md';
+
+		// the About page ships with the app itself, so it keeps working even if the
+		// mounted vault (which may be an externally synced Obsidian vault) doesn't
+		// provide its own .about.md - a vault-local one, if present, still wins
+		if ($requestFile === '/' . $about && !is_file($filePath)) {
+			$filePath = __DIR__ . '/' . $about . '.md';
+		}
+
+		if (is_file($filePath)) {
+			$content .= file_get_contents($filePath);
+		}
 	}
 
 	return $content;

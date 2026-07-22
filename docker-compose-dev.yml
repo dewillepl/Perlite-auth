@@ -24,10 +24,10 @@ services:
       - SITE_TYPE=article
       - SITE_URL=
       - SITE_IMAGE=
-      - SITE_DESC=
+      - SITE_DESC=A web based markdown and Bases viewer optimized for Obsidian Notes
       - SITE_NAME=Perlite
       - SITE_TWITTER=https://x.com/
-      - SITE_LOGO=perlite.svg
+      - SITE_LOGO=obsidian_logo_indigo_locked.svg
       - SITE_HOMEPAGE=https://perlite.secure77.de/
       - SITE_GITHUB=https://github.com/
     volumes:

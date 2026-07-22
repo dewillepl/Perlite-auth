@@ -1,3 +1,7 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 :root {
   --background-primary: #1e1e1e;
   --background-secondary: #2a2a2a;
@@ -23,6 +27,18 @@ body {
   margin: 0;
 }
 
+.login-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: -65px;
+}
+
+.login-logo {
+  width: 170px;
+  margin-bottom: 40px;
+}
+
 .login-container {
   background: var(--background-secondary);
   padding: 2rem;
@@ -40,11 +56,13 @@ body {
 .login-container input {
   width: 100%;
   padding: 0.75rem;
+  margin-top: 1px;
   margin-bottom: 1rem;
   background: var(--background-tertiary);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   color: var(--text-normal);
+  font-size: 15.33px;
 }
 
 .login-container input:focus {

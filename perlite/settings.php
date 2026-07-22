@@ -39,12 +39,12 @@ $tempPath = "";  // path to store the pre-rendered graph relations, leave empty 
 $siteType = "article";
 $siteImage = "https://raw.githubusercontent.com/secure-77/Perlite/main/screenshots/screenshot.png";
 $siteURL = "https://perlite.secure77.de";
-$siteDescription = "A web based markdown viewer optimized for Obsidian Notes";
+$siteDescription = "A web based markdown and Bases viewer optimized for Obsidian Notes";
 $siteName = "Perlite Demo";
 
 
 // --- Profile Settings ---
-$siteLogo = "perlite.svg";  // empty for no logo/customSection
+$siteLogo = "obsidian_logo_indigo_locked.svg";  // empty for no logo/customSection
 $siteHomepage = "";  // empty for $siteURL
 $siteGithub = "https://github.com/secure-77";  // empty for no Github
 $siteTwitter = "@secure_sec77";

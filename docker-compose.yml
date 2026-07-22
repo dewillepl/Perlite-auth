@@ -31,9 +31,9 @@ services:
       - SITE_TYPE=article
       - SITE_URL=
       - SITE_IMAGE=
-      - SITE_DESC=
+      - SITE_DESC=A web based markdown and Bases viewer optimized for Obsidian Notes
       - SITE_NAME=Perlite Auth
-      - SITE_LOGO=perlite.svg
+      - SITE_LOGO=obsidian_logo_indigo_locked.svg
       - SITE_HOMEPAGE=http://domain.example
     volumes:
       - ./perlite/${VAULT:-Obsidian}:/var/www/perlite/Obsidian:ro

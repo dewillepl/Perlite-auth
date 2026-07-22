@@ -56,7 +56,7 @@ if (!isset($siteURL))
 if (empty($siteLogo))
 	$siteLogo = getenv("SITE_LOGO");
 if (empty($siteDescription))
-	$siteDescription = empty(getenv('SITE_DESC')) ? 'A web based markdown viewer optimized for Obsidian Notes' : getenv('SITE_DESC');
+	$siteDescription = empty(getenv('SITE_DESC')) ? 'A web based markdown and Bases viewer optimized for Obsidian Notes' : getenv('SITE_DESC');
 if (empty($siteName))
 	$siteName = empty(getenv('SITE_NAME')) ? 'Perlite Demo' : getenv('SITE_NAME');
 if (empty($siteHomepage))

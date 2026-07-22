@@ -157,6 +157,17 @@ function getContent(str, home = false, popHover = false, anchor = "", preserveSc
     $.ajax({
       url: requestPath, cache: false, success: function (result) {
 
+        // the requested note no longer exists in the vault (e.g. deleted on disk) -
+        // the server returns an empty body for it, so fall back to the configured
+        // home page instead of leaving stale content or a blank reading pane
+        if (popHover == false && home == false && $.trim(result) === "") {
+          currentOpenFilePath = null;
+          currentOpenFileMtime = null;
+          window.history.pushState({}, "", location.protocol + '//' + location.host + uriPath);
+          getContent("home", true);
+          return;
+        }
+
         if (popHover == false) {
 
           // set content
@@ -1269,7 +1280,17 @@ function checkOpenFileState() {
 
       mtime = $.trim(mtime);
 
-      // an mtime is always digits; anything else (empty, login page, ...) is ignored
+      // an empty response means the file is no longer in the vault (deleted on disk) -
+      // fall back to the configured home page instead of leaving stale content on screen
+      if (mtime === "") {
+        currentOpenFilePath = null;
+        currentOpenFileMtime = null;
+        window.history.pushState({}, "", location.protocol + '//' + location.host + uriPath);
+        getContent("home", true);
+        return;
+      }
+
+      // an mtime is always digits; anything else (login page, ...) is ignored
       if (!/^[0-9]+$/.test(mtime)) {
         return;
       }

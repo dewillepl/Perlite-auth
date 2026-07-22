@@ -95,8 +95,8 @@ $jsonGraphData = getfullGraph($rootDir);
         <div class="workspace is-left-sidedock-open">
             <div class="workspace-ribbon side-dock-ribbon mod-left">
 
-                <a href="<?php echo $uriPath ?>"><img src="<?php echo $uriPath ?>logo.svg" height="25" class="logo"
-                        alt="Perlite Logo"></a>
+                <a href="<?php echo $uriPath ?>"><img src="<?php echo $uriPath ?>obsidian_logo_indigo_locked.svg" height="25" class="logo"
+                        alt="Perlite-Auth Logo"></a>
                 <div class="sidebar-toggle-button mod-left sidebar" aria-label="" aria-label-position="right">
 
 
@@ -858,8 +858,8 @@ $jsonGraphData = getfullGraph($rootDir);
             </svg>
         </div>
         <div class="modal-header">
-            <div class="modal-title"> <a href="."><img src="<?php echo $uriPath ?>logo.svg" height="35"
-                        alt="Perlite Logo" style="padding-top: 10px"></a> Perlite</div>
+            <div class="modal-title"> <a href="."><img src="<?php echo $uriPath ?>obsidian_logo_indigo_locked.svg" height="32" width="32"
+                        alt="Perlite-Auth Logo" style="padding-top: 10px"></a> Perlite-Auth</div>
         </div>
         <div class="aboutContent modal-content"></div>
     </div>

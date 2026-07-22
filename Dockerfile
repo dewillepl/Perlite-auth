@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y vim nginx supervisor libzip-dev \
 COPY --chown=www-data:www-data ./perlite/index.php ./
 COPY --chown=www-data:www-data ./perlite/helper.php ./
 COPY --chown=www-data:www-data ./perlite/content.php ./
+COPY --chown=www-data:www-data ./perlite/.about.md ./
 COPY --chown=www-data:www-data ./perlite/*.svg ./
 COPY --chown=www-data:www-data ./perlite/*.ico ./
 COPY --chown=www-data:www-data ./perlite/.styles/ ./.styles/

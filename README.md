@@ -107,33 +107,3 @@ This fork adds authentication and the features above on top of Perlite, and is i
    docker compose up -d
    ```
 
-## Wiki
-Please check the [wiki](https://github.com/secure-77/Perlite/wiki), here you will find further information, for example:
-
-- [Themes](https://github.com/secure-77/Perlite/wiki/Themes)
-- [Graph Setup and Settings](https://github.com/secure-77/Perlite/wiki/Graph)
-- [Perlite Settings](https://github.com/secure-77/Perlite/wiki/03---Perlite-Settings)
-- [Troubleshooting](https://github.com/secure-77/Perlite/wiki/Troubleshooting)
-
-
-## Security
-- The [Safemode](https://github.com/erusev/parsedown#security) from Parsedown is active, but I would not recommend to allow untrusted user input.
-- You should prevent that the .md files are direct accessible via the browser (only the php engine need access to it) or at least make sure that the md files will be downloaded and not be rendered by browser
-- You should prevent that the metadata.json file is direct accessible via the browser (only the php engine need access to it). The extracted metadata.json contains the whole obsidian structure, so this file could be sensitive if you plan to exclude some files or folders from Perlite. However, the parsing is done by the php engine and it checks for every path if the file really exists in the provided vault, so files you excluded from the vault will also not be visible in the graph, but they are still present in the metadata.json. This is why you should prevent access to it.
-
-
-## Contributing
-Want to contribute to Perlite-Auth? Awesome! Please open pull requests against [this repository's `main` branch](https://github.com/dewillepl/Perlite-auth). For contributions to upstream Perlite itself, use the [upstream dev branch](https://github.com/secure-77/Perlite/tree/dev).
-
-
-## Why Perlite?
-[Wiki](https://en.wikipedia.org/wiki/Perlite):
-*Perlite is an amorphous volcanic glass ... typically formed by the hydration of obsidian.*
-
-
-## Previous Versions and Changelog
-
-- [Perlite-Auth Changelog](Changelog.md) — for this fork's own history, see the commit log
-- [Upstream Perlite Changelog](https://github.com/secure-77/Perlite/blob/main/Changelog.md)
-- [Perlite 1.4.4 Demo](https://perlite.secure77.de/1.4.4)
-- [Perlite 1.3 Demo](https://perlite.secure77.de/1.3)

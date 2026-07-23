@@ -1,8 +1,10 @@
-# Perlite with Authorization
-  
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/secure-77/perlite) ![GitHub](https://img.shields.io/github/license/secure-77/perlite) ![GitHub last commit](https://img.shields.io/github/last-commit/secure-77/Perlite)
+# Perlite-Auth
 
-This fork adds simple authentication to Perlite, designed for Docker deployments only. It also fixes compatibility with PHP 8.2+ 
+![GitHub](https://img.shields.io/github/license/dewillepl/Perlite-auth) ![GitHub last commit](https://img.shields.io/github/last-commit/dewillepl/Perlite-auth)
+
+Perlite-Auth is an extended fork of [Perlite](https://github.com/secure-77/Perlite). It started as "just add authentication", but has since grown well beyond that: on top of a hardened login system, it adds read-only support for Obsidian Bases, a much more reliable image/attachment embed resolver, an auto-refreshing file tree, per-vault welcome pages with a `VAULT` selector, and its own branding. It also fixes compatibility with PHP 8.2+.
+
+See the [Features](#features) section below for the full list of what this fork adds on top of upstream Perlite, and the [Changelog](Changelog.md) for version-by-version detail.
 
 ---
 
@@ -27,6 +29,8 @@ If you want to discuss Perlite you can join the [Perlite Discord Server](https:/
 
 ## Features
 
+Inherited from upstream Perlite:
+
 - Auto build up, based on your folder (vault) structure
 - No Database required
 - Obsidian Themes Support
@@ -39,9 +43,19 @@ If you want to discuss Perlite you can join the [Perlite Discord Server](https:/
 - Obsidian tags, links, images and preview Support
 - Dark and Light Mode
 
-## Install Perlite with Authentication (Docker only)
+Added by this fork:
 
-This fork adds simple authentication on top of Perlite and is intended for Docker deployment only. Non-Docker setups are not tested.
+- **Authentication**, hardened for real-world exposure: bcrypt password hashing, `hash_equals()` username comparison, HttpOnly/SameSite (and Secure over HTTPS) cookies, nginx `auth_request` gating that also covers direct `.php` requests, and rate-limited login attempts
+- **Read-only support for Obsidian Bases** (`.base` files): a YAML-subset config parser, a filter/formula expression evaluator, and a tabbed-table renderer — including clickable wikilinks and markdown links inside table cells
+- **Much more reliable image and attachment embeds**: correct resolution of `../`-relative paths from Obsidian's "Insert attachment", width-only (`![[img|400]]`) and spaced (`![[img | 400]]`) syntax, and images/links embedded inside table cells with escaped pipes
+- **Auto-refreshing file tree and open note**, no page reload needed — the frontend polls for on-disk vault changes (e.g. from an `rsync` sync) and silently re-fetches the tree or the open note while preserving scroll position and folder state
+- **Per-vault welcome page and `VAULT` selector** — pick which vault folder gets served via `.env`, with a `HOME.md` welcome page template and a `setup.sh` script that scaffolds it
+- **HOME_FILE fallback** for deleted notes or directly-opened stale URLs, instead of a blank or stale reading pane
+- **Perlite-Auth branding**, with its own About page, login screen and logo
+
+## Install Perlite-Auth (Docker only)
+
+This fork adds authentication and the features above on top of Perlite, and is intended for Docker deployment only. Non-Docker setups are not tested.
 
 ### Steps:
 
@@ -109,7 +123,7 @@ Please check the [wiki](https://github.com/secure-77/Perlite/wiki), here you wil
 
 
 ## Contributing
-Want to contribute? Awesome! Please use the [dev branch](https://github.com/secure-77/Perlite/tree/dev) for pull requests.
+Want to contribute to Perlite-Auth? Awesome! Please open pull requests against [this repository's `main` branch](https://github.com/dewillepl/Perlite-auth). For contributions to upstream Perlite itself, use the [upstream dev branch](https://github.com/secure-77/Perlite/tree/dev).
 
 
 ## Why Perlite?
@@ -119,6 +133,7 @@ Want to contribute? Awesome! Please use the [dev branch](https://github.com/secu
 
 ## Previous Versions and Changelog
 
-- [Changelog](https://github.com/secure-77/Perlite/blob/main/Changelog.md)
+- [Perlite-Auth Changelog](Changelog.md) — for this fork's own history, see the commit log
+- [Upstream Perlite Changelog](https://github.com/secure-77/Perlite/blob/main/Changelog.md)
 - [Perlite 1.4.4 Demo](https://perlite.secure77.de/1.4.4)
 - [Perlite 1.3 Demo](https://perlite.secure77.de/1.3)
